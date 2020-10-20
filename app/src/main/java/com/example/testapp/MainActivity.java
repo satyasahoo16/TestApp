@@ -1,5 +1,6 @@
 package com.example.testapp;
 
+import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
 
@@ -20,6 +21,10 @@ import com.thanosfisherman.wifiutils.WifiUtils;
 import com.thanosfisherman.wifiutils.wifiConnect.ConnectionErrorCode;
 import com.thanosfisherman.wifiutils.wifiConnect.ConnectionSuccessListener;
 import com.google.android.material.snackbar.Snackbar;
+import com.thanosfisherman.wifiutils.wifiDisconnect.DisconnectionErrorCode;
+import com.thanosfisherman.wifiutils.wifiDisconnect.DisconnectionSuccessListener;
+import com.thanosfisherman.wifiutils.wifiRemove.RemoveErrorCode;
+import com.thanosfisherman.wifiutils.wifiRemove.RemoveSuccessListener;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -29,16 +34,21 @@ public class MainActivity extends AppCompatActivity {
 
     private View parentLayout;
     private EditText etSSID, etPass;
-    private Button btnConnect;
+    private Button btnConnect,btnDisconnect;
+    private String networkSSID, networkPass;
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
-      //  etSSID = findViewById(R.id.etSSID);
-       // etPass = findViewById(R.id.etPass);
+        etSSID = findViewById(R.id.etSSID);
+        etPass = findViewById(R.id.etPass);
         btnConnect=findViewById(R.id.btnconnect);
+        btnDisconnect=findViewById(R.id.btndisconnect);
         parentLayout = findViewById(android.R.id.content);
+
+        networkSSID = etSSID.getText().toString().trim();
+        networkPass = etPass.getText().toString().trim();
 
         btnConnect.setOnClickListener(new View.OnClickListener() {
                                          @Override
@@ -62,7 +72,6 @@ public class MainActivity extends AppCompatActivity {
                                                               //Start Service Which Will Remove Wifi Password User When He Closes App** REMOVED NOT NEEDED IN THIS CASE
 
 
-                                                          }
 
                                                           @Override
                                                           public void failed(@Nullable ConnectionErrorCode errorCode) {
@@ -91,14 +100,18 @@ public class MainActivity extends AppCompatActivity {
         if(Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
                 WifiNetworkSuggestion networkSuggestion1 =
                         new WifiNetworkSuggestion.Builder()
-                                .setSsid("bsahoo53@hotifi")
-                                .setWpa2Passphrase("7853003858")
+                                //.setSsid("hotifi_1@hotifi")
+                                //.setWpa2Passphrase("221B.baker.street")
+                                .setSsid(networkSSID)
+                                .setWpa2Passphrase(networkPass)
                                 .build();
 
                 WifiNetworkSuggestion networkSuggestion2 =
                         new WifiNetworkSuggestion.Builder()
-                                .setSsid("bsahoo53@hotifi")
-                                .setWpa3Passphrase("7853003858")
+                                //.setSsid("hotifi_1@hotifi")
+                                //.setWpa3Passphrase("221B.baker.street")
+                                .setSsid(networkSSID)
+                                .setWpa2Passphrase(networkPass)
                                 .build();
 
                 List<WifiNetworkSuggestion> suggestionsList = new ArrayList<>();
@@ -110,13 +123,38 @@ public class MainActivity extends AppCompatActivity {
 
         else{
                 WifiConfiguration wifiConfiguration = new WifiConfiguration();
-                wifiConfiguration.SSID = String.format("\"%s\"", "bsahoo53@hotifi");
-                wifiConfiguration.preSharedKey = String.format("\"%s\"", "7853003858");
-                int wifiID = wifiManager.addNetwork(wifiConfiguration);
+                //wifiConfiguration.SSID = String.format("\"%s\"", "hotifi_1@hotifi");
+                //wifiConfiguration.preSharedKey = String.format("\"%s\"", "221B.baker.street");
+                wifiConfiguration.SSID = String.format("\"%s\"", networkSSID);
+                wifiConfiguration.preSharedKey = String.format("\"%s\"", networkPass);
+            int wifiID = wifiManager.addNetwork(wifiConfiguration);
                 wifiManager.enableNetwork(wifiID, true);
             }
                                           }
                                       }
+);
+                btnDisconnect.setOnClickListener(new View.OnClickListener() {
+                    @Override
+                    public void onClick(View view) {
+                        /*WifiUtils.withContext(getApplicationContext())
+                                .disconnect(new DisconnectionSuccessListener() {
+                                    @Override
+                                    public void success() {
+                                        Toast.makeText(MainActivity.this, "Disconnect success!", Toast.LENGTH_SHORT).show();
+                                    }
+
+                                    @Override
+                                    public void failed(@NonNull DisconnectionErrorCode errorCode) {
+                                        Toast.makeText(MainActivity.this, "Failed to disconnect: " + errorCode.toString(), Toast.LENGTH_SHORT).show();
+                                    }
+                                });*/
+                        WifiManager wifiManager = (WifiManager) getApplicationContext().getSystemService(Context.WIFI_SERVICE);
+                        int networkId = wifiManager.getConnectionInfo().getNetworkId();
+                        wifiManager.removeNetwork(networkId);
+                        wifiManager.saveConfiguration();
+
+                    }
+                }
 
         );
 
